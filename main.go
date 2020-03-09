@@ -2,12 +2,13 @@ package main
 
 import (
 	"fmt"
+	"strconv"
 
-	"blockchain/blockchain"
+	"blockchain/core"
 )
 
 func main() {
-	bc := blockchain.NewBlockchain()
+	bc := core.NewBlockchain()
 
 	bc.AddBlock("Send 1 BTC to Gallon")
 	bc.AddBlock("Send 2 more BTC to Gallon")
@@ -16,6 +17,8 @@ func main() {
 		fmt.Printf("Prev. hash: %x\n", block.PrevBlockHash)
 		fmt.Printf("Data: %s\n", block.Data)
 		fmt.Printf("Hash: %x\n", block.Hash)
+		pow := core.NewProofOfWork(block)
+		fmt.Printf("PoW: %s\n", strconv.FormatBool(pow.Validate()))
 		fmt.Println()
 	}
 }
