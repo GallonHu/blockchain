@@ -16,11 +16,13 @@ var (
 
 const targetBits = 24
 
+// ProofOfWork represents a proof-of-work
 type ProofOfWork struct {
 	block  *Block
 	target *big.Int
 }
 
+// NewProofOfWork builds and returens a ProofOfWork
 func NewProofOfWork(b *Block) *ProofOfWork {
 	target := big.NewInt(1)
 	target.Lsh(target, uint(256-targetBits))
@@ -30,6 +32,7 @@ func NewProofOfWork(b *Block) *ProofOfWork {
 	return pow
 }
 
+// Prepare data
 func (pow *ProofOfWork) prepareData(nonce int) []byte {
 	data := bytes.Join(
 		[][]byte{
@@ -45,6 +48,7 @@ func (pow *ProofOfWork) prepareData(nonce int) []byte {
 	return data
 }
 
+// Run performs a proof-of-work
 func (pow *ProofOfWork) Run() (int, []byte) {
 	var hashInt big.Int
 	var hash [32]byte
@@ -63,11 +67,13 @@ func (pow *ProofOfWork) Run() (int, []byte) {
 			nonce++
 		}
 	}
+	fmt.Printf("\r%x\n", hash)
 	fmt.Printf("\n\n")
 
 	return nonce, hash[:]
 }
 
+// Validate Validates block's PoW
 func (pow *ProofOfWork) Validate() bool {
 	var hashInt big.Int
 
