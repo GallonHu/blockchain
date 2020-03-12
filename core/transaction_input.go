@@ -14,7 +14,7 @@ type TxInput struct {
 }
 
 // UsesKey checks whether the address initiated the transaction
-func (in *TxInput) UsesKsy(pubKeyHash []byte) bool {
+func (in *TxInput) UsesKey(pubKeyHash []byte) bool {
 	lockingHash := wallet.HashPubKey(in.PubKey)
 
 	return bytes.Compare(lockingHash, pubKeyHash) == 0

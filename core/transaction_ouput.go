@@ -22,3 +22,11 @@ func (out *TxOutput) Lock(address []byte) {
 func (out *TxOutput) IsLockedWithKey(pubKeyHash []byte) bool {
 	return bytes.Compare(out.PubKeyHash, pubKeyHash) == 0
 }
+
+// NewTXOutput create a new TXOutput
+func NewTXOutput(value int, address string) *TxOutput {
+	txo := &TxOutput{value, nil}
+	txo.Lock([]byte(address))
+
+	return txo
+}
