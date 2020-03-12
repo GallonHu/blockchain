@@ -8,6 +8,8 @@ import (
 	"strconv"
 
 	"blockchain/core"
+	"blockchain/utils"
+	"blockchain/wallet"
 )
 
 // CLI deals with commandline arguments
@@ -15,10 +17,12 @@ type CLI struct{}
 
 func (cli *CLI) printUsage() {
 	fmt.Println("Usage:")
-	fmt.Println("\tcreateblockchain -address ADDRESS - Create a blockchain and send genesis block reward to ADDRESS")
-	fmt.Println("\tgetbalance -address ADDRESS - Get balance of ADDRESS")
-	fmt.Println("\tprintchain - Print all the blocks of the blockchain")
-	fmt.Println("\tsend -from FROM -to TO -amount AMOUNT -mine - Send AMOUNT of coins from FROM address to TO. Mine on the same node, when -mine is set.")
+	fmt.Println("   createblockchain -address ADDRESS - Create a blockchain and send genesis block reward to ADDRESS")
+	fmt.Println("   createwallet - Generates a new key-pair and saves it into the wallet file")
+	fmt.Println("   getbalance -address ADDRESS - Get balance of ADDRESS")
+	fmt.Println("   listaddresses - Lists all addresses from the wallet file")
+	fmt.Println("   printchain - Print all the blocks of the blockchain")
+	fmt.Println("   send -from FROM -to TO -amount AMOUNT -mine - Send AMOUNT of coins from FROM address to TO. Mine on the same node, when -mine is set.")
 }
 
 func (cli *CLI) validateArgs() {
@@ -33,7 +37,9 @@ func (cli *CLI) Run() {
 	cli.validateArgs()
 
 	createBlockchainCmd := flag.NewFlagSet("createblockchain", flag.ExitOnError)
+	createWalletCmd := flag.NewFlagSet("createwallet", flag.ExitOnError)
 	getBalanceCmd := flag.NewFlagSet("getbalance", flag.ExitOnError)
+	listAddressesCmd := flag.NewFlagSet("listaddresses", flag.ExitOnError)
 	printChainCmd := flag.NewFlagSet("pringChain", flag.ExitOnError)
 	sendCmd := flag.NewFlagSet("send", flag.ExitOnError)
 
@@ -49,8 +55,18 @@ func (cli *CLI) Run() {
 		if err != nil {
 			log.Panic(err)
 		}
+	case "createwallet":
+		err := createWalletCmd.Parse(os.Args[2:])
+		if err != nil {
+			log.Panic(err)
+		}
 	case "getbalance":
 		err := getBalanceCmd.Parse(os.Args[2:])
+		if err != nil {
+			log.Panic(err)
+		}
+	case "listaddresses":
+		err := listAddressesCmd.Parse(os.Args[2:])
 		if err != nil {
 			log.Panic(err)
 		}
@@ -77,6 +93,10 @@ func (cli *CLI) Run() {
 		cli.createBlockchain(*createBlockchainAdress)
 	}
 
+	if createWalletCmd.Parsed() {
+		cli.createWallet()
+	}
+
 	if getBalanceCmd.Parsed() {
 		if *getBalanceAddress == "" {
 			getBalanceCmd.Usage()
@@ -84,6 +104,10 @@ func (cli *CLI) Run() {
 		}
 
 		cli.getBalance(*getBalanceAddress)
+	}
+
+	if listAddressesCmd.Parsed() {
+		cli.listAddresses()
 	}
 
 	if printChainCmd.Parsed() {
@@ -101,24 +125,51 @@ func (cli *CLI) Run() {
 }
 
 func (cli *CLI) createBlockchain(address string) {
-	bc := core.NewBlockchain(address)
-	defer bc.Db.Close()
+	if !wallet.ValidateAddress(address) {
+		log.Panic("ERROR: Address is not valid")
+	}
+	bc := core.CreateBlockchain(address)
+	bc.Db.Close()
+	fmt.Println("Done!")
+}
 
-	fmt.Printf("Done!\n")
+func (cli *CLI) createWallet() {
+	wallets, _ := wallet.NewWallets()
+	address := wallets.CreateWallet()
+	wallets.SaveToFile()
+
+	fmt.Printf("Your new address: %s\n", address)
 }
 
 func (cli *CLI) getBalance(address string) {
+	if !wallet.ValidateAddress(address) {
+		log.Panic("ERROR: Address is not valid")
+	}
 	bc := core.NewBlockchain(address)
 	defer bc.Db.Close()
 
 	balance := 0
-	UTXOs := bc.FindUTXO(address)
+	pubKeyHash := utils.Base58Decode([]byte(address))
+	pubKeyHash = pubKeyHash[1 : len(pubKeyHash)-4]
+	UTXOs := bc.FindUTXO(pubKeyHash)
 
 	for _, out := range UTXOs {
 		balance += out.Value
 	}
 
 	fmt.Printf("Balance of '%s': %d\n", address, balance)
+}
+
+func (cli *CLI) listAddresses() {
+	wallets, err := wallet.NewWallets()
+	if err != nil {
+		log.Panic(err)
+	}
+	addresses := wallets.GetAddresses()
+
+	for _, address := range addresses {
+		fmt.Println(address)
+	}
 }
 
 func (cli *CLI) pringChain() {
@@ -129,11 +180,15 @@ func (cli *CLI) pringChain() {
 
 	for {
 		block := bci.Next()
-		fmt.Printf("Prev. hash: %x\n", block.PrevBlockHash)
-		fmt.Printf("Hash: %x\n", block.Hash)
+
+		fmt.Printf("============ Block %x ============\n", block.Hash)
+		fmt.Printf("Prev. block: %x\n", block.PrevBlockHash)
 		pow := core.NewProofOfWork(block)
-		fmt.Printf("PoW: %s\n", strconv.FormatBool(pow.Validate()))
-		fmt.Println()
+		fmt.Printf("PoW: %s\n\n", strconv.FormatBool(pow.Validate()))
+		for _, tx := range block.Transactions {
+			fmt.Println(tx)
+		}
+		fmt.Printf("\n\n")
 
 		if len(block.PrevBlockHash) == 0 {
 			break
@@ -142,10 +197,17 @@ func (cli *CLI) pringChain() {
 }
 
 func (cli *CLI) send(from, to string, amount int) {
+	if !wallet.ValidateAddress(from) {
+		log.Panic("ERROR: Sender address is not valid")
+	}
+	if !wallet.ValidateAddress(to) {
+		log.Panic("ERROR: Recipient address is not valid")
+	}
+
 	bc := core.NewBlockchain(from)
 	defer bc.Db.Close()
 
 	tx := core.NewTransaction(from, to, amount, bc)
 	bc.MineBlock([]*core.Transaction{tx})
-	fmt.Printf("Success\n")
+	fmt.Println("Success!")
 }
