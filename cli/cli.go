@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
-	// "strconv"
+	"strconv"
 
 	"blockchain/core"
 )
@@ -101,14 +101,14 @@ func (cli *CLI) Run() {
 }
 
 func (cli *CLI) createBlockchain(address string) {
-	bc := core.CreateBlockchain(address)
+	bc := core.NewBlockchain(address)
 	defer bc.Db.Close()
 
 	fmt.Printf("Done!\n")
 }
 
 func (cli *CLI) getBalance(address string) {
-	bc := core.CreateBlockchain(address)
+	bc := core.NewBlockchain(address)
 	defer bc.Db.Close()
 
 	balance := 0
@@ -122,28 +122,30 @@ func (cli *CLI) getBalance(address string) {
 }
 
 func (cli *CLI) pringChain() {
-	/*  bci := cli.Bc.Interator() */
+	bc := core.NewBlockchain("")
+	defer bc.Db.Close()
 
-	// for {
-	// block := bci.Next()
-	// fmt.Printf("Prev. hash: %x\n", block.PrevBlockHash)
-	// fmt.Printf("Hash: %x\n", block.Hash)
-	// pow := core.NewProofOfWork(block)
-	// fmt.Printf("PoW: %s\n", strconv.FormatBool(pow.Validate()))
-	// fmt.Println()
+	bci := bc.Interator()
 
-	// if len(block.PrevBlockHash) == 0 {
-	// break
-	// }
-	/*  } */
-	fmt.Printf("Not complete yet\n")
+	for {
+		block := bci.Next()
+		fmt.Printf("Prev. hash: %x\n", block.PrevBlockHash)
+		fmt.Printf("Hash: %x\n", block.Hash)
+		pow := core.NewProofOfWork(block)
+		fmt.Printf("PoW: %s\n", strconv.FormatBool(pow.Validate()))
+		fmt.Println()
+
+		if len(block.PrevBlockHash) == 0 {
+			break
+		}
+	}
 }
 
 func (cli *CLI) send(from, to string, amount int) {
-	bc := core.CreateBlockchain(from)
+	bc := core.NewBlockchain(from)
 	defer bc.Db.Close()
 
 	tx := core.NewTransaction(from, to, amount, bc)
-	bc.AddBlock([]*core.Transaction{tx})
+	bc.MineBlock([]*core.Transaction{tx})
 	fmt.Printf("Success\n")
 }

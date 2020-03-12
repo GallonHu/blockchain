@@ -5,9 +5,9 @@ import (
 	// "crypto/ecdsa"
 	"encoding/hex"
 	// "errors"
-	// "fmt"
+	"fmt"
 	"log"
-	// "os"
+	"os"
 
 	"github.com/etcd-io/bbolt"
 )
@@ -20,6 +20,41 @@ const genesisCoinbaseData = "The Times 03/Jan/2009 Chancellor on brink of second
 type Blockchain struct {
 	tip []byte
 	Db  *bbolt.DB
+}
+
+// MineBlock mines a new block with the provided transactions
+func (bc *Blockchain) MineBlock(transactions []*Transaction) {
+	var lastHash []byte
+
+	err := bc.Db.View(func(tx *bbolt.Tx) error {
+		b := tx.Bucket([]byte(blocksBucket))
+		lastHash = b.Get([]byte("l"))
+
+		return nil
+	})
+
+	if err != nil {
+		log.Panic(err)
+	}
+
+	newBlock := NewBlock(transactions, lastHash)
+
+	err = bc.Db.Update(func(tx *bbolt.Tx) error {
+		b := tx.Bucket([]byte(blocksBucket))
+		err := b.Put(newBlock.Hash, newBlock.Serialize())
+		if err != nil {
+			log.Panic(err)
+		}
+
+		err = b.Put([]byte("l"), newBlock.Hash)
+		if err != nil {
+			log.Panic(err)
+		}
+
+		bc.tip = newBlock.Hash
+
+		return nil
+	})
 }
 
 // AddBlock add the block into the blockchain
@@ -56,6 +91,43 @@ func (bc *Blockchain) AddBlock(transactions []*Transaction) {
 	if err != nil {
 		log.Panic(err)
 	}
+}
+
+func dbExists() bool {
+	if _, err := os.Stat(dbFile); os.IsNotExist(err) {
+		return false
+	}
+
+	return true
+}
+
+// NewBlockchain creates a new Blockchain with genesis Block
+func NewBlockchain(address string) *Blockchain {
+	if dbExists() == false {
+		fmt.Println("No existing blockchain found. Create one first.")
+		os.Exit(1)
+	}
+
+	var tip []byte
+	db, err := bbolt.Open(dbFile, 0600, nil)
+	if err != nil {
+		log.Panic(err)
+	}
+
+	err = db.Update(func(tx *bbolt.Tx) error {
+		b := tx.Bucket([]byte(blocksBucket))
+		tip = b.Get([]byte("l"))
+
+		return nil
+	})
+
+	if err != nil {
+		log.Panic(err)
+	}
+
+	bc := Blockchain{tip, db}
+
+	return &bc
 }
 
 // CreateBlockchain creates a new  blockchain DB
