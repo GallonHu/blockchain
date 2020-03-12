@@ -1,12 +1,21 @@
 package core
 
+import (
+	"blockchain/wallet"
+	"bytes"
+)
+
 // TxInput represents a transaction input
 type TxInput struct {
 	Txid      []byte
 	Vout      int
-	ScriptSig string
+	Signature []byte
+	PubKey    []byte
 }
 
-func (in *TxInput) CanUnlockOutputWith(unlockingData string) bool {
-	return in.ScriptSig == unlockingData
+// UsesKey checks whether the address initiated the transaction
+func (in *TxInput) UsesKsy(pubKeyHash []byte) bool {
+	lockingHash := wallet.HashPubKey(in.PubKey)
+
+	return bytes.Compare(lockingHash, pubKeyHash) == 0
 }
