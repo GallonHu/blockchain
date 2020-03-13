@@ -21,8 +21,8 @@ const subsidy = 10
 // Transaction represents a block transaction
 type Transaction struct {
 	ID   []byte
-	Vin  []TxInput
-	Vout []TxOutput
+	Vin  []TXInput
+	Vout []TXOutput
 }
 
 // String returns a human-readable representation of a transaction
@@ -85,18 +85,18 @@ func NewCoinbaseTX(to, data string) *Transaction {
 		data = fmt.Sprintf("Reward to %s", to)
 	}
 
-	txin := TxInput{[]byte{}, -1, nil, []byte(data)}
+	txin := TXInput{[]byte{}, -1, nil, []byte(data)}
 	txout := NewTXOutput(subsidy, to)
-	tx := Transaction{nil, []TxInput{txin}, []TxOutput{*txout}}
+	tx := Transaction{nil, []TXInput{txin}, []TXOutput{*txout}}
 	tx.ID = tx.Hash()
 
 	return &tx
 }
 
-// NewTransaction creates a new transaction
-func NewTransaction(from, to string, amount int, bc *Blockchain) *Transaction {
-	var inputs []TxInput
-	var outputs []TxOutput
+// NewUTXOTransaction creates a new transaction
+func NewUTXOTransaction(from, to string, amount int, UTXOSet *UTXOSet) *Transaction {
+	var inputs []TXInput
+	var outputs []TXOutput
 
 	wallets, err := wallet.NewWallets()
 	if err != nil {
@@ -104,7 +104,7 @@ func NewTransaction(from, to string, amount int, bc *Blockchain) *Transaction {
 	}
 	w := wallets.GetWallet(from)
 	pubKeyHash := wallet.HashPubKey(w.PublicKey)
-	acc, validOutputs := bc.FindSpendableOutputs(pubKeyHash, amount)
+	acc, validOutputs := UTXOSet.FindSpendableOutputs(pubKeyHash, amount)
 
 	if acc < amount {
 		log.Panic("ERROR: Not enough funds")
@@ -118,7 +118,7 @@ func NewTransaction(from, to string, amount int, bc *Blockchain) *Transaction {
 		}
 
 		for _, out := range outs {
-			input := TxInput{txID, out, nil, w.PublicKey}
+			input := TXInput{txID, out, nil, w.PublicKey}
 			inputs = append(inputs, input)
 		}
 	}
@@ -131,7 +131,7 @@ func NewTransaction(from, to string, amount int, bc *Blockchain) *Transaction {
 
 	tx := Transaction{nil, inputs, outputs}
 	tx.ID = tx.Hash()
-	bc.SignTransaction(&tx, w.PrivateKey)
+	UTXOSet.Blockchain.SignTransaction(&tx, w.PrivateKey)
 
 	return &tx
 }
@@ -163,15 +163,15 @@ func (tx *Transaction) Sign(privKey ecdsa.PrivateKey, prevTXs map[string]Transac
 
 // TrimmedCopy returns a trimmed transactions copy
 func (tx *Transaction) TrimmedCopy() Transaction {
-	var inputs []TxInput
-	var outputs []TxOutput
+	var inputs []TXInput
+	var outputs []TXOutput
 
 	for _, vin := range tx.Vin {
-		inputs = append(inputs, TxInput{vin.Txid, vin.Vout, nil, nil})
+		inputs = append(inputs, TXInput{vin.Txid, vin.Vout, nil, nil})
 	}
 
 	for _, vout := range tx.Vout {
-		outputs = append(outputs, TxOutput{vout.Value, vout.PubKeyHash})
+		outputs = append(outputs, TXOutput{vout.Value, vout.PubKeyHash})
 	}
 
 	txCopy := Transaction{tx.ID, inputs, outputs}
