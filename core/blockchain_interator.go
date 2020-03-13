@@ -11,7 +11,7 @@ type BlockchainIterator struct {
 	db          *bbolt.DB
 }
 
-func (bc *Blockchain) Interator() *BlockchainIterator {
+func (bc *Blockchain) Iterator() *BlockchainIterator {
 	bci := &BlockchainIterator{bc.tip, bc.Db}
 
 	return bci

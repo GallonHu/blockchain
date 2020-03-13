@@ -5,8 +5,8 @@ import (
 	"bytes"
 )
 
-// TxInput represents a transaction input
-type TxInput struct {
+// TXInput represents a transaction input
+type TXInput struct {
 	Txid      []byte
 	Vout      int
 	Signature []byte
@@ -14,7 +14,7 @@ type TxInput struct {
 }
 
 // UsesKey checks whether the address initiated the transaction
-func (in *TxInput) UsesKey(pubKeyHash []byte) bool {
+func (in *TXInput) UsesKey(pubKeyHash []byte) bool {
 	lockingHash := wallet.HashPubKey(in.PubKey)
 
 	return bytes.Compare(lockingHash, pubKeyHash) == 0
