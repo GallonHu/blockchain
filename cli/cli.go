@@ -259,7 +259,7 @@ func (cli *CLI) send(from, to, nodeID string, amount int, mineNow bool) {
 }
 
 func (cli *CLI) startNode(nodeID, minerAddress string) {
-	fmt.Printf("Starting node %s", nodeID)
+	fmt.Printf("Starting node %s\n", nodeID)
 	if len(minerAddress) > 0 {
 		if wallet.ValidateAddress(minerAddress) {
 			fmt.Println("Mining is on. Address to receive rewards: ", minerAddress)
