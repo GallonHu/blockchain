@@ -2,7 +2,6 @@ package core
 
 import (
 	"bytes"
-	"crypto/sha256"
 	"encoding/gob"
 	"log"
 	"time"
@@ -15,6 +14,7 @@ type Block struct {
 	PrevBlockHash []byte
 	Hash          []byte
 	Nonce         int
+	Height        int
 }
 
 // Serialize Serializes the block
@@ -55,12 +55,14 @@ func DeserializeBlock(d []byte) *Block {
 }
 
 // NewBlock creates and returns Block
-func NewBlock(transactions []*Transaction, PrevBlockHash []byte) *Block {
+func NewBlock(transactions []*Transaction, PrevBlockHash []byte, height int) *Block {
 	block := &Block{
 		Timestamp:     time.Now().Unix(),
 		Transactions:  transactions,
 		PrevBlockHash: PrevBlockHash,
 		Hash:          []byte{},
+		Nonce:         0,
+		Height:        height,
 	}
 	pow := NewProofOfWork(block)
 	nonce, hash := pow.Run()
@@ -73,5 +75,5 @@ func NewBlock(transactions []*Transaction, PrevBlockHash []byte) *Block {
 
 // NewGenesisBlock creates and returens genesis Block
 func NewGenesisBlock(coinbase *Transaction) *Block {
-	return NewBlock([]*Transaction{coinbase}, []byte{})
+	return NewBlock([]*Transaction{coinbase}, []byte{}, 0)
 }
