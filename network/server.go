@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/gob"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"net"
@@ -26,8 +27,12 @@ type version struct {
 	AddrFrom   string
 }
 
+type getblocks struct {
+	AddrFrom string
+}
+
 func StartServer(nodeID, minerAddress string) {
-	nodeAddress = fmt.Sprint("localhost:%s", nodeID)
+	nodeAddress = fmt.Sprintf("localhost:%s", nodeID)
 	miningAddress = minerAddress
 	ln, err := net.Listen(protocol, nodeAddress)
 	if err != nil {
@@ -100,4 +105,45 @@ func handleVersion(request []byte, bc *core.Blockchain) {
 	if !nodeIsKnown(payload.AddrFrom) {
 		knownNodes = append(knownNodes, payload.AddrFrom)
 	}
+}
+
+func sendData(addr string, data []byte) {
+	conn, err := net.Dial(protocol, addr)
+	if err != nil {
+		fmt.Printf("%s is not available\n", addr)
+		var updatedNodes []string
+
+		for _, node := range knownNodes {
+			if node != addr {
+				updatedNodes = append(updatedNodes, node)
+			}
+		}
+
+		knownNodes = updatedNodes
+
+		return
+	}
+	defer conn.Close()
+
+	_, err = io.Copy(conn, bytes.NewReader(data))
+	if err != nil {
+		log.Panic(err)
+	}
+}
+
+func nodeIsKnown(address string) bool {
+	for _, addr := range knownNodes {
+		if addr == address {
+			return true
+		}
+	}
+
+	return false
+}
+
+func sendGetBlocks(address string) {
+	payload := utils.GobEncode(getblocks{nodeAddress})
+	request := append(utils.CommandToBytes("getblocks"), payload...)
+
+	sendData(address, request)
 }
