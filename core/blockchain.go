@@ -36,7 +36,7 @@ func dbExists(dbFile string) bool {
 
 // NewBlockchain creates a new Blockchain with genesis Block
 func NewBlockchain(nodeID string) *Blockchain {
-	dbFile := fmt.Sprint(dbFile, nodeID)
+	dbFile := fmt.Sprintf(dbFile, nodeID)
 	if dbExists(dbFile) == false {
 		fmt.Println("No existing blockchain found. Create one first.")
 		os.Exit(1)

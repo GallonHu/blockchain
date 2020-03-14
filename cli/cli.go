@@ -58,6 +58,7 @@ func (cli *CLI) Run() {
 	sendFrom := sendCmd.String("from", "", "Source wallet address")
 	sendTo := sendCmd.String("to", "", "Destination wallet address")
 	sendAmount := sendCmd.Int("amount", 0, "Amount to send")
+	sendMine := sendCmd.Bool("mine", false, "Mine immediately on the same node")
 	startNodeMiner := startNodeCmd.String("miner", "", "Enable mining mode and send reward to ADDRESS")
 
 	switch os.Args[1] {
@@ -136,7 +137,7 @@ func (cli *CLI) Run() {
 			os.Exit(1)
 		}
 
-		cli.send(*sendFrom, *sendTo, nodeID, *sendAmount)
+		cli.send(*sendFrom, *sendTo, nodeID, *sendAmount, *sendMine)
 	}
 
 	if startNodeCmd.Parsed() {
@@ -226,7 +227,7 @@ func (cli *CLI) pringChain(nodeID string) {
 	}
 }
 
-func (cli *CLI) send(from, to, nodeID string, amount int) {
+func (cli *CLI) send(from, to, nodeID string, amount int, mineNow bool) {
 	if !wallet.ValidateAddress(from) {
 		log.Panic("ERROR: Sender address is not valid")
 	}
@@ -244,11 +245,16 @@ func (cli *CLI) send(from, to, nodeID string, amount int) {
 	}
 	wallet := wallets.GetWallet(from)
 	tx := core.NewUTXOTransaction(&wallet, to, amount, &UTXOSet)
-	cbTx := core.NewCoinbaseTX(from, "")
-	txs := []*core.Transaction{cbTx, tx}
 
-	newBlock := bc.MineBlock(txs)
-	UTXOSet.Update(newBlock)
+	if mineNow {
+		cbTx := core.NewCoinbaseTX(from, "")
+		txs := []*core.Transaction{cbTx, tx}
+		newBlock := bc.MineBlock(txs)
+		UTXOSet.Update(newBlock)
+	} else {
+		network.SendTx(network.KnownNodes[0], tx)
+	}
+
 	fmt.Println("Success!")
 }
 
