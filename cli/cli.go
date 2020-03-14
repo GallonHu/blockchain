@@ -162,10 +162,10 @@ func (cli *CLI) createBlockchain(address, nodeID string) {
 	fmt.Println("Done!")
 }
 
-func (cli *CLI) createWallet() {
-	wallets, _ := wallet.NewWallets()
+func (cli *CLI) createWallet(nodeID string) {
+	wallets, _ := wallet.NewWallets(nodeID)
 	address := wallets.CreateWallet()
-	wallets.SaveToFile()
+	wallets.SaveToFile(nodeID)
 
 	fmt.Printf("Your new address: %s\n", address)
 }
@@ -190,8 +190,8 @@ func (cli *CLI) getBalance(address, nodeID string) {
 	fmt.Printf("Balance of '%s': %d\n", address, balance)
 }
 
-func (cli *CLI) listAddresses() {
-	wallets, err := wallet.NewWallets()
+func (cli *CLI) listAddresses(nodeID string) {
+	wallets, err := wallet.NewWallets(nodeID)
 	if err != nil {
 		log.Panic(err)
 	}
@@ -238,7 +238,12 @@ func (cli *CLI) send(from, to, nodeID string, amount int) {
 	UTXOSet := core.UTXOSet{bc}
 	defer bc.Db.Close()
 
-	tx := core.NewUTXOTransaction(from, to, amount, &UTXOSet)
+	wallets, err := wallet.NewWallets(nodeID)
+	if err != nil {
+		log.Panic(err)
+	}
+	wallet := wallets.GetWallet(from)
+	tx := core.NewUTXOTransaction(&wallet, to, amount, &UTXOSet)
 	cbTx := core.NewCoinbaseTX(from, "")
 	txs := []*core.Transaction{cbTx, tx}
 

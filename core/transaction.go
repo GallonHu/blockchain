@@ -100,15 +100,10 @@ func NewCoinbaseTX(to, data string) *Transaction {
 }
 
 // NewUTXOTransaction creates a new transaction
-func NewUTXOTransaction(from, to string, amount int, UTXOSet *UTXOSet) *Transaction {
+func NewUTXOTransaction(w *wallet.Wallet, to string, amount int, UTXOSet *UTXOSet) *Transaction {
 	var inputs []TXInput
 	var outputs []TXOutput
 
-	wallets, err := wallet.NewWallets()
-	if err != nil {
-		log.Panic(err)
-	}
-	w := wallets.GetWallet(from)
 	pubKeyHash := wallet.HashPubKey(w.PublicKey)
 	acc, validOutputs := UTXOSet.FindSpendableOutputs(pubKeyHash, amount)
 
@@ -117,6 +112,7 @@ func NewUTXOTransaction(from, to string, amount int, UTXOSet *UTXOSet) *Transact
 	}
 
 	// Build a list of inputs
+	from := fmt.Sprintf("%s", w.GetAddress())
 	for txid, outs := range validOutputs {
 		txID, err := hex.DecodeString(txid)
 		if err != nil {

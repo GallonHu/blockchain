@@ -14,7 +14,7 @@ import (
 )
 
 const version = byte(0x00)
-const walletFile = "database/wallet.dat"
+const walletFile = "database/wallet_%s.dat"
 const addressChecksumLen = 4
 
 // Wallet stores a pairs of private and public key
