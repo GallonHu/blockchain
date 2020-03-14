@@ -110,7 +110,7 @@ func (cli *CLI) Run() {
 	}
 
 	if createWalletCmd.Parsed() {
-		cli.createWallet()
+		cli.createWallet(nodeID)
 	}
 
 	if getBalanceCmd.Parsed() {
@@ -123,7 +123,7 @@ func (cli *CLI) Run() {
 	}
 
 	if listAddressesCmd.Parsed() {
-		cli.listAddresses()
+		cli.listAddresses(nodeID)
 	}
 
 	if printChainCmd.Parsed() {
@@ -253,7 +253,7 @@ func (cli *CLI) send(from, to, nodeID string, amount int) {
 }
 
 func (cli *CLI) startNode(nodeID, minerAddress string) {
-	fmt.Printf("Starting node %d", nodeID)
+	fmt.Printf("Starting node %s", nodeID)
 	if len(minerAddress) > 0 {
 		if wallet.ValidateAddress(minerAddress) {
 			fmt.Println("Mining is on. Address to receive rewards: ", minerAddress)
