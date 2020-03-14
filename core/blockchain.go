@@ -66,7 +66,7 @@ func NewBlockchain(nodeID string) *Blockchain {
 
 // CreateBlockchain creates a new  blockchain DB
 func CreateBlockchain(address, nodeID string) *Blockchain {
-	dbFile := fmt.Sprint(dbFile, nodeID)
+	dbFile := fmt.Sprintf(dbFile, nodeID)
 	if dbExists(dbFile) {
 		fmt.Println("Blockchain already exists.")
 		os.Exit(1)
