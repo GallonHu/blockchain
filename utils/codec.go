@@ -28,7 +28,7 @@ func ReverseBytes(data []byte) {
 	}
 }
 
-func gobEncode(data interface{}) []byte {
+func GobEncode(data interface{}) []byte {
 	var buff bytes.Buffer
 
 	enc := gob.NewEncoder(&buff)
@@ -40,7 +40,7 @@ func gobEncode(data interface{}) []byte {
 	return buff.Bytes()
 }
 
-func commandToBytes(command string) []byte {
+func CommandToBytes(command string) []byte {
 	var bytes [commandLength]byte
 
 	for i, c := range command {
@@ -50,7 +50,7 @@ func commandToBytes(command string) []byte {
 	return bytes[:]
 }
 
-func bytesToCommand(bytes []byte) string {
+func BytesToCommand(bytes []byte) string {
 	var command []byte
 
 	for _, b := range bytes {
@@ -62,6 +62,6 @@ func bytesToCommand(bytes []byte) string {
 	return fmt.Sprintf("%s", command)
 }
 
-func extractCommand(request []byte) []byte {
+func ExtractCommand(request []byte) []byte {
 	return request[:commandLength]
 }
