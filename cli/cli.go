@@ -106,7 +106,7 @@ func (cli *CLI) Run() {
 			createBlockchainCmd.Usage()
 			os.Exit(1)
 		}
-		cli.createBlockchain(*createBlockchainAdress)
+		cli.createBlockchain(*createBlockchainAdress, nodeID)
 	}
 
 	if createWalletCmd.Parsed() {
@@ -119,7 +119,7 @@ func (cli *CLI) Run() {
 			os.Exit(1)
 		}
 
-		cli.getBalance(*getBalanceAddress)
+		cli.getBalance(*getBalanceAddress, nodeID)
 	}
 
 	if listAddressesCmd.Parsed() {
@@ -127,7 +127,7 @@ func (cli *CLI) Run() {
 	}
 
 	if printChainCmd.Parsed() {
-		cli.pringChain()
+		cli.pringChain(nodeID)
 	}
 
 	if sendCmd.Parsed() {
@@ -136,7 +136,7 @@ func (cli *CLI) Run() {
 			os.Exit(1)
 		}
 
-		cli.send(*sendFrom, *sendTo, *sendAmount)
+		cli.send(*sendFrom, *sendTo, nodeID, *sendAmount)
 	}
 
 	if startNodeCmd.Parsed() {
@@ -149,11 +149,11 @@ func (cli *CLI) Run() {
 	}
 }
 
-func (cli *CLI) createBlockchain(address string) {
+func (cli *CLI) createBlockchain(address, nodeID string) {
 	if !wallet.ValidateAddress(address) {
 		log.Panic("ERROR: Address is not valid")
 	}
-	bc := core.CreateBlockchain(address)
+	bc := core.CreateBlockchain(address, nodeID)
 	defer bc.Db.Close()
 
 	UTXOSet := core.UTXOSet{bc}
@@ -170,11 +170,11 @@ func (cli *CLI) createWallet() {
 	fmt.Printf("Your new address: %s\n", address)
 }
 
-func (cli *CLI) getBalance(address string) {
+func (cli *CLI) getBalance(address, nodeID string) {
 	if !wallet.ValidateAddress(address) {
 		log.Panic("ERROR: Address is not valid")
 	}
-	bc := core.NewBlockchain()
+	bc := core.NewBlockchain(nodeID)
 	UTXOSet := core.UTXOSet{bc}
 	defer bc.Db.Close()
 
@@ -202,8 +202,8 @@ func (cli *CLI) listAddresses() {
 	}
 }
 
-func (cli *CLI) pringChain() {
-	bc := core.NewBlockchain()
+func (cli *CLI) pringChain(nodeID string) {
+	bc := core.NewBlockchain(nodeID)
 	defer bc.Db.Close()
 
 	bci := bc.Iterator()
@@ -226,7 +226,7 @@ func (cli *CLI) pringChain() {
 	}
 }
 
-func (cli *CLI) send(from, to string, amount int) {
+func (cli *CLI) send(from, to, nodeID string, amount int) {
 	if !wallet.ValidateAddress(from) {
 		log.Panic("ERROR: Sender address is not valid")
 	}
@@ -234,7 +234,7 @@ func (cli *CLI) send(from, to string, amount int) {
 		log.Panic("ERROR: Recipient address is not valid")
 	}
 
-	bc := core.NewBlockchain()
+	bc := core.NewBlockchain(nodeID)
 	UTXOSet := core.UTXOSet{bc}
 	defer bc.Db.Close()
 

@@ -16,7 +16,7 @@ import (
 	"github.com/etcd-io/bbolt"
 )
 
-const dbFile = "database/blockchain.db"
+const dbFile = "database/blockchain_%s.db"
 const blocksBucket = "blocks"
 const genesisCoinbaseData = "The Times 03/Jan/2009 Chancellor on brink of second bailout for banks"
 
@@ -72,7 +72,7 @@ func (bc *Blockchain) MineBlock(transactions []*Transaction) *Block {
 	return newBlock
 }
 
-func dbExists() bool {
+func dbExists(dbFile string) bool {
 	if _, err := os.Stat(dbFile); os.IsNotExist(err) {
 		return false
 	}
@@ -81,8 +81,9 @@ func dbExists() bool {
 }
 
 // NewBlockchain creates a new Blockchain with genesis Block
-func NewBlockchain() *Blockchain {
-	if dbExists() == false {
+func NewBlockchain(nodeID string) *Blockchain {
+	dbFile := fmt.Sprint(dbFile, nodeID)
+	if dbExists(dbFile) == false {
 		fmt.Println("No existing blockchain found. Create one first.")
 		os.Exit(1)
 	}
@@ -110,9 +111,10 @@ func NewBlockchain() *Blockchain {
 }
 
 // CreateBlockchain creates a new  blockchain DB
-func CreateBlockchain(address string) *Blockchain {
-	if dbExists() {
-		fmt.Println("Blockchain already exists.")
+func CreateBlockchain(address, nodeID string) *Blockchain {
+	dbFile := fmt.Sprint(dbFile, nodeID)
+	if dbExists(dbFile) == false {
+		fmt.Println("No existing blockchain found. Create one first.")
 		os.Exit(1)
 	}
 
