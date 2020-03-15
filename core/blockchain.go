@@ -1,14 +1,11 @@
 package core
 
 import (
-	// "bytes"
-	// "crypto/ecdsa"
 	"bytes"
 	"crypto/ecdsa"
 	"encoding/hex"
 	"errors"
 
-	// "errors"
 	"fmt"
 	"log"
 	"os"
@@ -271,7 +268,7 @@ func (bc *Blockchain) MineBlock(transactions []*Transaction) *Block {
 		log.Panic(err)
 	}
 
-	newBlock := NewBlock(transactions, lastHash, lastHeight)
+	newBlock := NewBlock(transactions, lastHash, lastHeight+1)
 
 	err = bc.Db.Update(func(tx *bbolt.Tx) error {
 		b := tx.Bucket([]byte(blocksBucket))

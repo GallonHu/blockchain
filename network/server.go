@@ -346,6 +346,18 @@ func handleConnection(conn net.Conn, bc *Blockchain) {
 	fmt.Printf("Received %s command\n", command)
 
 	switch command {
+	case "addr":
+		handleAddr(request)
+	case "block":
+		handleBlock(request, bc)
+	case "inv":
+		handleInv(request, bc)
+	case "getblocks":
+		handleGetBlocks(request, bc)
+	case "getdata":
+		handleGetData(request, bc)
+	case "tx":
+		handleTx(request, bc)
 	case "version":
 		handleVersion(request, bc)
 	default:
